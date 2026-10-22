@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% block c %}
+<div class="top"><a href="/logout">لاگ آؤٹ</a></div>
+<h1>سیل اور کوریج رپورٹ</h1>
+<form method="post" enctype="multipart/form-data" onsubmit="b=this.querySelector('button');b.disabled=true;b.textContent='پروسیس ہو رہا ہے… (تقریباً ایک منٹ)';setTimeout(()=>{b.disabled=false;b.textContent='رپورٹ تیار کریں اور ڈاؤن لوڈ کریں'},60000)">
+<label>Raw Data فائل (.xlsx)</label><input type="file" name="raw" accept=".xlsx" required>
+<label>File Format فائل (.xlsx)</label><input type="file" name="format" accept=".xlsx" required>
+<button>رپورٹ تیار کریں اور ڈاؤن لوڈ کریں</button></form>{% endblock %}
