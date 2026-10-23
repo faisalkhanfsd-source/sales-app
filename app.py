@@ -57,27 +57,42 @@ def index():
 @login_required
 def ncb_page():
     if request.method == "GET":
-        return render_template("ncb.html", img=None)
-    f = request.files.get("file")
-    region = request.form.get("region", "SBL TOTAL")
+        return render_template("ncb.html", results=None)
+    f, pf = request.files.get("file"), request.files.get("phones")
     if not f or not f.filename:
-        flash("فائل اپلوڈ کریں")
+        flash("SALES VS TARGET فائل اپلوڈ کریں")
         return redirect(url_for("ncb_page"))
     try:
         data = ncb.read_summary(f.stream)
-        png = ncb.render(data, region)
+        if pf and pf.filename:
+            targets = ncb.read_phones(pf.stream, pf.filename)
+            if not targets:
+                raise ValueError("نمبروں والی فائل میں کوئی لائن نہیں ملی")
+        else:
+            targets = [("", request.form.get("region", "SBL TOTAL").strip().upper())]
+        send = bool(request.form.get("send"))
+        results = []
+        for phone, region in targets:
+            r = {"region": region, "phone": phone, "note": ""}
+            if region not in data["regions"]:
+                r["note"] = "یہ ریجن SUMMARY شیٹ میں نہیں ملا"
+                results.append(r)
+                continue
+            png = ncb.render(data, region)
+            r["caption"] = ncb.caption(data, region)
+            r["img"] = base64.b64encode(png).decode()
+            if send and phone:
+                try:
+                    ok = ncb.send_whatsapp(png, phone, r["caption"])
+                    r["note"] = "واٹس ایپ پر بھیج دی گئی" if ok else \
+                        "خودکار بھیجنے کی سیٹنگ (WA_TOKEN, WA_PHONE_ID) نہیں لگی"
+                except Exception as e:
+                    r["note"] = "بھیجنے میں ایرر: %s" % e
+            results.append(r)
     except Exception as e:
         flash("فائل پروسیس نہیں ہو سکی: %s" % e)
         return redirect(url_for("ncb_page"))
-    note = None
-    if request.form.get("send"):
-        try:
-            note = "واٹس ایپ پر بھیج دی گئی" if ncb.send_whatsapp(png) else \
-                   "واٹس ایپ کی سیٹنگ (WA_TOKEN, WA_PHONE_ID, WA_TO) نہیں لگی"
-        except Exception as e:
-            note = "واٹس ایپ پر بھیجنے میں ایرر: %s" % e
-    return render_template("ncb.html", region=region, regions=list(data["regions"]),
-                           note=note, img=base64.b64encode(png).decode())
+    return render_template("ncb.html", results=results, regions=list(data["regions"]))
 
 
 if __name__ == "__main__":
