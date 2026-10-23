@@ -120,7 +120,8 @@ def render(data, region="SBL TOTAL"):
         raise ValueError("ریجن نہیں ملا: " + region)
     H, pad = 30, 7
     W = sum(WIDTHS)
-    img = Image.new("RGB", (W + 1, H * (len(rows) + 3) + 1), "white")
+    FOOT = 46
+    img = Image.new("RGB", (W + 1, H * (len(rows) + 3) + 1 + FOOT), "white")
     d = ImageDraw.Draw(img)
     f, fb = _font(14), _font(14, True)
 
@@ -156,6 +157,9 @@ def render(data, region="SBL TOTAL"):
             cell(x, y, w, t, st, "center" if j == 1 and not total else ("left" if j < 2 else "right"),
                  fill, color)
             x += w
+    fy = H * (len(rows) + 3) + 1
+    d.rectangle([0, fy, W, fy + FOOT], fill="#FFFFFF")
+    d.text((14, fy + FOOT / 2), caption(data, region), font=_font(26, True), fill="#002060", anchor="lm")
     out = io.BytesIO()
     img.save(out, "PNG")
     return out.getvalue()
