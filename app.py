@@ -1,6 +1,6 @@
 import os, hmac, functools
 from flask import Flask, request, session, redirect, url_for, render_template, send_file, flash
-import processor
+import processor, ncb, base64, io
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-this-secret-key")
@@ -51,6 +51,33 @@ def index():
         return send_file(out, as_attachment=True, download_name="File_Format_Result.xlsx",
                          mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     return render_template("index.html")
+
+
+@app.route("/ncb", methods=["GET", "POST"])
+@login_required
+def ncb_page():
+    if request.method == "GET":
+        return render_template("ncb.html", img=None)
+    f = request.files.get("file")
+    region = request.form.get("region", "SBL TOTAL")
+    if not f or not f.filename:
+        flash("فائل اپلوڈ کریں")
+        return redirect(url_for("ncb_page"))
+    try:
+        data = ncb.read_summary(f.stream)
+        png = ncb.render(data, region)
+    except Exception as e:
+        flash("فائل پروسیس نہیں ہو سکی: %s" % e)
+        return redirect(url_for("ncb_page"))
+    note = None
+    if request.form.get("send"):
+        try:
+            note = "واٹس ایپ پر بھیج دی گئی" if ncb.send_whatsapp(png) else \
+                   "واٹس ایپ کی سیٹنگ (WA_TOKEN, WA_PHONE_ID, WA_TO) نہیں لگی"
+        except Exception as e:
+            note = "واٹس ایپ پر بھیجنے میں ایرر: %s" % e
+    return render_template("ncb.html", region=region, regions=list(data["regions"]),
+                           note=note, img=base64.b64encode(png).decode())
 
 
 if __name__ == "__main__":

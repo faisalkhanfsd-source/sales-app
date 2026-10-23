@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% block c %}
+<div class="top"><a href="/">← سیل رپورٹ</a> &nbsp; <a href="/logout">لاگ آؤٹ</a></div>
+<h1>NCB سیل بمقابلہ ٹارگٹ (سکرین شاٹ)</h1>
+{% if note %}<div class="err" style="background:#e6f4ea;color:#1e4620">{{note}}</div>{% endif %}
+<form method="post" enctype="multipart/form-data">
+<label>SALES VS TARGET فائل (.xlsx)</label><input type="file" name="file" accept=".xlsx" required>
+<label>ریجن</label>
+<select name="region" style="width:100%;padding:10px;border-radius:8px;border:1px solid #c9d0de">
+{% for r in (regions or ['SBL TOTAL','DAHARKI','LARKANA','R.Y. KHAN','SHIKARPUR','SUKKUR','KA OUTLETS','NAWAB SHAH','KHAIRPUR']) %}
+<option value="{{r}}" {% if r==(region or 'SBL TOTAL') %}selected{% endif %}>{{r}}</option>{% endfor %}</select>
+<label style="font-weight:400"><input type="checkbox" name="send"> واٹس ایپ پر خودکار بھیجیں (اگر سیٹنگ لگی ہو)</label>
+<button>تصویر بنائیں</button></form>
+{% if img %}
+<hr style="margin:22px 0;border:0;border-top:1px solid #dde">
+<img id="pic" src="data:image/png;base64,{{img}}" style="width:100%;border:1px solid #ccd">
+<button onclick="share()" style="background:#25D366">WhatsApp پر شیئر کریں</button>
+<a id="dl" download="NCB_{{region}}.png" href="data:image/png;base64,{{img}}"><button type="button" style="background:#555">تصویر ڈاؤن لوڈ کریں</button></a>
+<script>
+async function share(){
+ const b=await (await fetch(document.getElementById('pic').src)).blob();
+ const f=new File([b],"NCB_{{region}}.png",{type:"image/png"});
+ if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f]});}catch(e){}}
+ else{document.getElementById('dl').click();window.open("https://web.whatsapp.com/","_blank");}
+}
+</script>
+{% endif %}{% endblock %}
