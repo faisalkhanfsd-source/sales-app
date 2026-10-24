@@ -1,6 +1,6 @@
 import os, hmac, functools
 from flask import Flask, request, session, redirect, url_for, render_template, send_file, flash
-import processor, ncb, base64, io
+import processor, ncb, automation, base64, io
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-this-secret-key")
@@ -93,6 +93,25 @@ def ncb_page():
         flash("فائل پروسیس نہیں ہو سکی: %s" % e)
         return redirect(url_for("ncb_page"))
     return render_template("ncb.html", results=results, regions=list(data["regions"]))
+
+
+@app.route("/automation", methods=["GET", "POST"])
+@login_required
+def automation_page():
+    if request.method == "POST":
+        f = request.files.get("file")
+        if not f or not f.filename:
+            flash("فائل اپلوڈ کریں")
+            return redirect(url_for("automation_page"))
+        try:
+            out, st = automation.rebuild(f.read())
+        except Exception as e:
+            flash("فائل پروسیس نہیں ہو سکی: %s" % e)
+            return redirect(url_for("automation_page"))
+        name = os.path.splitext(f.filename)[0] + "_Updated.xlsx"
+        return send_file(io.BytesIO(out), as_attachment=True, download_name=name,
+                         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    return render_template("automation.html")
 
 
 if __name__ == "__main__":

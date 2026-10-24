@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% block c %}
+<div class="top"><a href="/">← سیل رپورٹ</a> &nbsp; <a href="/ncb">NCB سکرین شاٹ</a> &nbsp; <a href="/logout">لاگ آؤٹ</a></div>
+<h1>Q-Automation اپ ڈیٹ</h1>
+<p style="line-height:1.9">فائل میں Customer Wise، Sales Order List، Pivet Customer Dispatch اور Finalized شیٹس میں نیا ڈیٹا ہو۔ Automation شیٹ نئی بن کر واپس ڈاؤن لوڈ ہو گی، فارمولوں کے ساتھ۔</p>
+<form method="post" enctype="multipart/form-data" onsubmit="b=this.querySelector('button');b.disabled=true;b.textContent='پروسیس ہو رہا ہے…';setTimeout(()=>{b.disabled=false;b.textContent='اپ ڈیٹ کریں اور ڈاؤن لوڈ کریں'},30000)">
+<label>Q-Automation فائل (.xlsx)</label><input type="file" name="file" accept=".xlsx" required>
+<button>اپ ڈیٹ کریں اور ڈاؤن لوڈ کریں</button></form>{% endblock %}
